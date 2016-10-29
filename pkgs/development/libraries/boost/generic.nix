@@ -1,4 +1,5 @@
 { stdenv, fetchurl, icu, expat, zlib, bzip2, python, fixDarwinDylibNames, libiconv
+, redefineFileMacroHook
 , toolset ? if stdenv.cc.isClang then "clang" else null
 , enableRelease ? true
 , enableDebug ? false
@@ -103,14 +104,7 @@ let
     "--libdir=$(out)/lib"
   ];
 
-  fixup = ''
-    # Make boost header paths relative so that they are not runtime dependencies
-    (
-      cd "$dev"
-      find include \( -name '*.hpp' -or -name '*.h' -or -name '*.ipp' \) \
-        -exec sed '1i#line 1 "{}"' -i '{}' \;
-    )
-  '' + optionalString (stdenv.cross.libc or null == "msvcrt") ''
+  fixup = optionalString (stdenv.cross.libc or null == "msvcrt") ''
     ${stdenv.cross.config}-ranlib "$out/lib/"*.a
   '';
 
@@ -146,7 +140,7 @@ stdenv.mkDerivation {
 
   enableParallelBuilding = true;
 
-  buildInputs = [ expat zlib bzip2 libiconv ]
+  buildInputs = [ expat zlib bzip2 libiconv redefineFileMacroHook ]
     ++ stdenv.lib.optionals (! stdenv ? cross) [ python icu ]
     ++ stdenv.lib.optional stdenv.isDarwin fixDarwinDylibNames;
 
