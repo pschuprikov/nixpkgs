@@ -336,6 +336,7 @@ in
 
   iconConvTools = callPackage ../build-support/icon-conv-tools {};
 
+  redefineFileMacroHook = makeSetupHook { } ../build-support/setup-hooks/redefine-file-macro.sh;
 
   ### TOOLS
 
