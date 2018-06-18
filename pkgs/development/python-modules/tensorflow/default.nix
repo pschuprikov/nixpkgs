@@ -11,6 +11,8 @@
 , sse42Support ? builtins.elem (stdenv.hostPlatform.platform.gcc.arch or "default") ["westmere" "sandybridge" "ivybridge" "haswell" "broadwell" "skylake" "skylake-avx512"]
 , avx2Support  ? builtins.elem (stdenv.hostPlatform.platform.gcc.arch or "default") [                                     "haswell" "broadwell" "skylake" "skylake-avx512"]
 , fmaSupport   ? builtins.elem (stdenv.hostPlatform.platform.gcc.arch or "default") [                                     "haswell" "broadwell" "skylake" "skylake-avx512"]
+, sse41Support ? false
+, avxSupport ? false
 }:
 
 assert cudaSupport -> nvidia_x11 != null
@@ -89,7 +91,9 @@ let
     hardeningDisable = [ "all" ];
 
     bazelFlags = [ "--config=opt" ]
+                 ++ lib.optional sse41Support "--copt=-msse4.1"
                  ++ lib.optional sse42Support "--copt=-msse4.2"
+                 ++ lib.optional avxSupport "--copt=-mavx"
                  ++ lib.optional avx2Support "--copt=-mavx2"
                  ++ lib.optional fmaSupport "--copt=-mfma"
                  ++ lib.optional cudaSupport "--config=cuda";
