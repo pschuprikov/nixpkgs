@@ -2,35 +2,28 @@
 
 stdenv.mkDerivation rec {
   name = "linssid-${version}";
-  version = "2.7";
+  version = "3.6";
 
   src = fetchurl {
     url = "mirror://sourceforge/project/linssid/LinSSID_${version}/linssid_${version}.orig.tar.gz";
-    sha256 = "13d35rlcjncd8lx3khkgn9x8is2xjd5fp6ns5xsn3w6l4xj9b4gl";
+    sha256 = "1774wcr90jk0zil3psd545zz60l5f57bys366492b3vh7zliwc2p";
   };
 
   nativeBuildInputs = [ pkgconfig qmake makeWrapper ];
   buildInputs = [ qtbase qtsvg boost qwt ];
 
-  patches = [ ./0001-unbundled-qwt.patch ];
-
   postPatch = ''
-    sed -e "s|/usr/include/qt5.*$|& ${qwt}/include|" -i linssid-app/linssid-app.pro
+    sed -e "s|/usr/include/qwt|${qwt}/include|" -i linssid-app/linssid-app.pro
     sed -e "s|/usr/include/|/nonexistent/|g" -i linssid-app/*.pro
-    sed -e 's|^LIBS .*= .*libboost_regex.a|LIBS += -lboost_regex|' \
+    sed -e 's|^LIBS .*= .*/usr/lib/libqwt.*|LIBS += -lqwt|' \
         -e "s|/usr|$out|g" \
-        -i linssid-app/linssid-app.pro linssid-app/linssid.desktop
+        -i linssid-app/linssid-app.pro linssid-app/linssid.desktop linssid-app/linssid-pkexec
+    sed -e "s|pkexec|/run/wrappers/bin/pkexec|" -i linssid-app/linssid-pkexec
     sed -e "s|\.\./\.\./\.\./\.\./usr|$out|g" -i linssid-app/*.ui
-
-    sed -e "s|iwlist|${wirelesstools}/sbin/iwlist|g" -i linssid-app/Getter.cpp
-    sed -e "s|iw dev|${iw}/sbin/iw dev|g" -i linssid-app/MainForm.cpp
-
-    # Remove bundled qwt
-    rm -fr qwt-lib
   '';
 
   postInstall = ''
-    wrapProgram $out/bin/linssid \
+    wrapProgram $out/sbin/linssid \
       --prefix QT_PLUGIN_PATH : ${qtbase}/${qtbase.qtPluginPrefix} \
       --prefix PATH : ${stdenv.lib.makeBinPath [ wirelesstools iw ]}  
       '';
