@@ -23561,7 +23561,9 @@ in
 
   bftools = callPackage ../applications/science/biology/bftools { };
 
-  blast = callPackage ../applications/science/biology/blast { };
+  blast = callPackage ../applications/science/biology/blast { 
+    inherit (darwin.apple_sdk.frameworks) ApplicationServices; 
+  };
 
   cd-hit = callPackage ../applications/science/biology/cd-hit { };
 
