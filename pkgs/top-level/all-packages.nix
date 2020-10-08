@@ -12317,6 +12317,7 @@ in
 
   inherit (callPackages ../applications/networking/cluster/hadoop {
     jre = jre8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731
+    maven = maven.override { jdk = openjdk8; };
   })
     hadoop_2_7
     hadoop_2_8
@@ -12684,7 +12685,7 @@ in
 
   self = pkgsi686Linux.callPackage ../development/interpreters/self { };
 
-  spark = callPackage ../applications/networking/cluster/spark { };
+  spark = callPackage ../applications/networking/cluster/spark { hadoop = hadoop_3_1; };
 
   sparkleshare = callPackage ../applications/version-management/sparkleshare { };
 

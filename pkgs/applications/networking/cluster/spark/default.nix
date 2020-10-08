@@ -7,11 +7,11 @@ with lib;
 stdenv.mkDerivation rec {
 
   pname = "spark";
-  version = "2.4.4";
+  version = "2.4.7";
 
   src = fetchzip {
     url    = "mirror://apache/spark/${pname}-${version}/${pname}-${version}-bin-without-hadoop.tgz";
-    sha256 = "1a9w5k0207fysgpxx6db3a00fs5hdc2ncx99x4ccy2s0v5ndc66g";
+    sha256 = "0lkzlzidlqnp7js74dvydbizw844zyzl0gkgx6rh413s8xw219hm";
   };
 
   nativeBuildInputs = [ makeWrapper ];
