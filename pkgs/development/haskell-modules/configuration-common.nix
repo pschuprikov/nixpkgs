@@ -1422,6 +1422,32 @@ self: super: {
   # https://github.com/wz1000/HieDb/issues/30
   hiedb = dontCheck super.hiedb;
 
+  gogol-core = overrideCabal super.gogol-core (attrs: {
+    src = pkgs.fetchFromGitHub {
+      owner = "brendanhay";
+      repo = "gogol";
+      rev = "d7c7d71fc985cd96fb5f05173da6c607da362b74";
+      sha256 = "sha256-DSTUwOmOHtfHCvEfFrnFKra/wqCoZ4rQoEsDTAjK8/4=";
+    };
+    postUnpack = ''
+      export sourceRoot=source/core
+    '';
+  });
+
+  nvim-hs = pkgs.lib.pipe super.nvim-hs [
+    (x: overrideCabal x (attrs: {
+      postPatch = ''
+        rm api
+      '';
+    }))
+    (x: addBuildDepend x pkgs.neovim)
+    dontCheck
+  ];
+
+  random-source = super.random-source.override {
+    random = self.nvim-hs;
+  };
+
   data-tree-print = doJailbreak super.data-tree-print;
 
   # 2020-11-15: aeson 1.5.4.1 needs to new quickcheck-instances for testing
