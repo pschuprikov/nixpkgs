@@ -6,13 +6,17 @@ let
   maven-jdk8 = maven.override {
     jdk = jdk8;
   };
-  common = { version, sha256, dependencies-sha256, maven, tomcat, opensslPkg ? openssl }:
+  common = { 
+    version, sha256, dependencies-sha256, maven, tomcat, opensslPkg ? openssl, archive ? false, patches ? []
+    }:
     let
       # compile the hadoop tarball from sources, it requires some patches
       binary-distributon = stdenv.mkDerivation rec {
         name = "hadoop-${version}-bin";
         src = fetchurl {
-          url = "mirror://apache/hadoop/common/hadoop-${version}/hadoop-${version}-src.tar.gz";
+          url = if !archive 
+            then "mirror://apache/hadoop/common/hadoop-${version}/hadoop-${version}-src.tar.gz"
+            else "https://archive.apache.org/dist/hadoop/common/hadoop-${version}/hadoop-${version}-src.tar.gz";
           inherit sha256;
         };
 
@@ -24,12 +28,13 @@ let
         # perform fake build to make a fixed-output derivation of dependencies downloaded from maven central (~100Mb in ~3000 files)
         fetched-maven-deps = stdenv.mkDerivation {
           name = "hadoop-${version}-maven-deps";
-          inherit src postUnpack nativeBuildInputs buildInputs;
+          inherit src postUnpack nativeBuildInputs buildInputs patches;
           buildPhase = ''
-            while mvn package -Dmaven.repo.local=$out/.m2 ${mavenFlags} -Dmaven.wagon.rto=5000; [ $? = 1 ]; do
+            while mvn package -Dmaven.repo.local=$out/.m2 ${mavenFlags} -Dmaven.javadoc.skip=true -Dmaven.wagon.rto=5000; [ $? = 1 ]; do
               echo "timeout, restart maven to continue downloading"
             done
           '';
+          dontUseCmakeConfigure = true;
           # keep only *.{pom,jar,xml,sha1,so,dll,dylib} and delete all ephemeral files with lastModified timestamps inside
           installPhase = ''find $out/.m2 -type f -regex '.+\(\.lastUpdated\|resolver-status\.properties\|_remote\.repositories\)' -delete'';
           outputHashAlgo = "sha256";
@@ -41,15 +46,8 @@ let
         buildInputs = [ fuse snappy zlib bzip2 opensslPkg protobuf2_5 libtirpc ];
         NIX_CFLAGS_COMPILE = [ "-I${libtirpc.dev}/include/tirpc" ];
         NIX_LDFLAGS = [ "-ltirpc" ];
-
+        inherit patches;
         # most of the hardcoded pathes are fixed in 2.9.x and 3.0.0, this list of patched files might be reduced when 2.7.x and 2.8.x will be deprecated
-
-        patches = [
-          (fetchpatch {
-            url = "https://patch-diff.githubusercontent.com/raw/apache/hadoop/pull/2886.patch";
-            sha256 = "1fim1d8va050za5i8a6slphmx015fzvhxkc2wi4rwg7kbj31sv0r";
-          })
-        ];
 
         postPatch = ''
           for file in hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/fs/HardLink.java \
@@ -71,7 +69,7 @@ let
         mavenFlags = "-Drequire.snappy -Drequire.bzip2 -DskipTests -Pdist,native -e";
         buildPhase = ''
           # 'maven.repo.local' must be writable
-          mvn package --offline -Dmaven.repo.local=$(cp -dpR ${fetched-maven-deps}/.m2 ./ && chmod +w -R .m2 && pwd)/.m2 ${mavenFlags}
+          mvn package --offline -Dmaven.javadoc.skip=true -Dmaven.repo.local=$(cp -dpR ${fetched-maven-deps}/.m2 ./ && chmod +w -R .m2 && pwd)/.m2 ${mavenFlags}
           # remove runtime dependency on $jdk/jre/lib/amd64/server/libjvm.so
           patchelf --set-rpath ${lib.makeLibraryPath [glibc]} hadoop-dist/target/hadoop-${version}/lib/native/libhadoop.so.1.0.0
           patchelf --set-rpath ${lib.makeLibraryPath [glibc]} hadoop-dist/target/hadoop-${version}/lib/native/libhdfs.so.0.0.0
@@ -92,6 +90,8 @@ let
           cp -dpR * $out/
           mv $out/*.txt $out/share/doc/hadoop/
 
+          patch $out/etc/hadoop/hadoop-env.sh ${./hadoop-env.patch}
+
           #
           # Do not use `wrapProgram` here, script renaming may result to weird things: http://i.imgur.com/0Xee013.png
           #
@@ -103,7 +103,8 @@ let
                 --prefix PATH : "${lib.makeBinPath [ which jre bash coreutils ]}" \
                 --prefix JAVA_LIBRARY_PATH : "${lib.makeLibraryPath [ opensslPkg snappy zlib bzip2 ]}" \
                 --set JAVA_HOME "${jre}" \
-                --set HADOOP_PREFIX "$out"
+                --set HADOOP_PREFIX "$out" \
+                --set HADOOP_HOME "$out"
             fi
           done
         '';
@@ -129,6 +130,15 @@ let
         };
       };
 
+  tomcat_6_0_41 = rec {
+    version = "6.0.41";
+    src = fetchurl {
+      # do not use "mirror://apache/" here, tomcat-6 is legacy and has been removed from the mirrors
+      url = "https://archive.apache.org/dist/tomcat/tomcat-6/v${version}/bin/apache-tomcat-${version}.tar.gz";
+      sha256 = "sha256-LrKBK0LzVZaQVC/LnqDB9D3QsLfcoZeHZAwrd1Ww+VM=";
+    };
+  };
+
   tomcat_6_0_48 = rec {
     version = "6.0.48";
     src = fetchurl {
@@ -139,6 +149,15 @@ let
   };
 
 in {
+  hadoop_2_6_5 = common {
+    archive = true;
+    version = "2.6.5";
+    sha256 = "sha256-OoQ/GHPZlRpREUd37NTfWORVNA682vn35hJEENTdZfA=";
+    patches = [ ./errno.patch ./openssl.patch ./tirpc.patch ];
+    dependencies-sha256 = "sha256-L0OoNh6SuHB5pdIjOLgvz7QPNgp2JmEZykHy87fkCMw=";
+    tomcat = tomcat_6_0_41;
+    maven = maven-jdk8;
+  };
   hadoop_2_7 = common {
     version = "2.7.7";
     sha256 = "1ahv67f3lwak3kbjvnk1gncq56z6dksbajj872iqd0awdsj3p5rf";
@@ -176,5 +195,11 @@ in {
     dependencies-sha256 = "1q63jsxg3d31x0p8hvhpvbly2b07almyzsbhwphbczl3fhlqgiwn";
     tomcat = null;
     maven = maven-jdk8;
+    patches = [
+      (fetchpatch {
+        url = "https://patch-diff.githubusercontent.com/raw/apache/hadoop/pull/2886.patch";
+        sha256 = "1fim1d8va050za5i8a6slphmx015fzvhxkc2wi4rwg7kbj31sv0r";
+      })
+    ];
   };
 }

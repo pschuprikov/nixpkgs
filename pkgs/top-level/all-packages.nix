@@ -12319,6 +12319,7 @@ in
     jre = jre8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731
     maven = maven.override { jdk = openjdk8; };
   })
+    hadoop_2_6_5
     hadoop_2_7
     hadoop_2_8
     hadoop_2_9
@@ -12685,7 +12686,14 @@ in
 
   self = pkgsi686Linux.callPackage ../development/interpreters/self { };
 
-  spark = callPackage ../applications/networking/cluster/spark { hadoop = hadoop_3_1; };
+  spark_2_4_7 = callPackage ../applications/networking/cluster/spark/2_4_7.nix { hadoop = hadoop_3_1; };
+  spark_2_4_4 = callPackage ../applications/networking/cluster/spark/2_4_4.nix { 
+    hadoop = hadoop_2_6_5; 
+    maven = maven.override { jdk = jdk8; }; 
+    jdk = jdk8;
+  };
+
+  spark = spark_2_4_7;
 
   sparkleshare = callPackage ../applications/version-management/sparkleshare { };
 
