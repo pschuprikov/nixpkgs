@@ -1,4 +1,4 @@
-{ version, sha256, depsSha256 }:
+{ version, sha256, depsSha256, archive ? false }:
 { lib, stdenv, runCommand, fetchzip, makeWrapper, jdk, pythonPackages, coreutils
 , inetutils, hadoop, procps, maven, RSupport ? true, R, scalaVersion ? "2.12" }:
 
@@ -8,7 +8,9 @@ let
   pname = "spark";
 
   src = fetchzip {
-    url = "mirror://apache/spark/${pname}-${version}/${pname}-${version}.tgz";
+    url = if archive
+      then "https://archive.apache.org/dist/${pname}/${pname}-${version}/${pname}-${version}.tgz"
+      else "mirror://apache/spark/${pname}-${version}/${pname}-${version}.tgz";
     inherit sha256;
   };
 

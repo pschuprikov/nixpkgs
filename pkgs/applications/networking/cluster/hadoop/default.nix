@@ -154,7 +154,7 @@ in {
     version = "2.6.5";
     sha256 = "sha256-OoQ/GHPZlRpREUd37NTfWORVNA682vn35hJEENTdZfA=";
     patches = [ ./errno.patch ./openssl.patch ./tirpc.patch ];
-    dependencies-sha256 = "sha256-L0OoNh6SuHB5pdIjOLgvz7QPNgp2JmEZykHy87fkCMw=";
+    dependencies-sha256 = "sha256-YrbTxTD2yFAM3TIpeU5MLWv3liTZk+LZwpsIiKKSxqU=";
     tomcat = tomcat_6_0_41;
     maven = maven-jdk8;
   };
