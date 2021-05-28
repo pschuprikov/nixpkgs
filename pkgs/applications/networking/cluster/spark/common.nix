@@ -95,7 +95,7 @@ in runCommand "${pname}-${version}" {
 
   for n in $(find ${dist-bin}/sbin/ -type f -executable); do
     makeWrapper "$n" "$out/bin/$(basename $n)"\
-      --set JAVA_HOME ${jdk.jre.home} \
+      --set JAVA_HOME ${jdk.home} \
       --set SPARK_HOME ${dist-bin} \
       --set SPARK_DIST_CLASSPATH "$(${hadoop}/bin/hadoop classpath)"
   done
