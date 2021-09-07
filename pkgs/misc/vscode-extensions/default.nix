@@ -28,6 +28,14 @@ let
   #
   baseExtensions = self: lib.mapAttrs (_n: lib.recurseIntoAttrs)
     {
+      efoerster.texlab = buildVscodeMarketplaceExtension {
+        mktplcRef = {
+          publisher = "efoerster";
+          name = "texlab";
+          version = "3.2.0";
+          sha256 = "sha256-cdagNHI+LyntibB1expSi6QZIBEHZhibTV09NGiE1bc=";
+        };
+      };
       _4ops.terraform = buildVscodeMarketplaceExtension {
         mktplcRef = {
           publisher = "4ops";
