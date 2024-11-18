@@ -13851,11 +13851,7 @@ self: super: with self; {
 
   qiskit-optimization = callPackage ../development/python-modules/qiskit-optimization { };
 
-  qiskit-terra = callPackage ../development/python-modules/qiskit-terra { };
-
-  qmk-dotty-dict = callPackage ../development/python-modules/qmk-dotty-dict { };
-
-  qnap-qsw = callPackage ../development/python-modules/qnap-qsw { };
+  qnap-qsw = callPackage ../development/python-modules/qnap-qsw{ };
 
   qnapstats = callPackage ../development/python-modules/qnapstats { };
 
