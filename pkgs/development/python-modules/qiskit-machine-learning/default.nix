@@ -82,6 +82,7 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
+    broken = true;
     description = "Software for developing quantum computing programs";
     homepage = "https://qiskit.org";
     downloadPage = "https://github.com/QISKit/qiskit-optimization/releases";
