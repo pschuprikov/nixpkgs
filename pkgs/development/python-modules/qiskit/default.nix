@@ -92,6 +92,8 @@ buildPythonPackage rec {
     ++ lib.optionals withCrosstalkPass crosstalkPackages
     ++ lib.optionals withCspLayoutPass cspLayoutPackages;
 
+  dontUseSetuptoolsCheck = 1;
+
   pythonImportsCheck = [
     "qiskit"
     "qiskit.pulse"
